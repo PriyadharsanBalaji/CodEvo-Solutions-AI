@@ -1,0 +1,31 @@
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix
+from tensorflow.keras.datasets import mnist
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+x_train_flat = x_train.reshape(x_train.shape[0], -1) / 255.0
+x_test_flat = x_test.reshape(x_test.shape[0], -1) / 255.0
+
+model = LogisticRegression(max_iter=100, solver='lbfgs', multi_class='multinomial')
+model.fit(x_train_flat, y_train)
+
+y_pred = model.predict(x_test_flat)
+
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Accuracy: {accuracy:.4f}')
+
+conf_matrix = confusion_matrix(y_test, y_pred)
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=np.arange(10), yticklabels=np.arange(10))
+plt.xlabel('Predicted Label')
+plt.ylabel('True Label')
+plt.title('Confusion Matrix for Logistic Regression on MNIST')
+plt.show()
+
+np.save('logistic_regression_coefficients.npy', model.coef_)
+np.save('logistic_regression_intercept.npy', model.intercept_)
