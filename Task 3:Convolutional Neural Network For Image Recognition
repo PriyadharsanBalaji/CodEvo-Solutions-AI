@@ -1,0 +1,70 @@
+import tensorflow as tf
+from tensorflow.keras import datasets, layers, models
+from sklearn.metrics import confusion_matrix, accuracy_score
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load CIFAR-10 dataset
+(x_train, y_train), (x_test, y_test) = datasets.cifar10.load_data()
+
+# Normalize pixel values to be between 0 and 1
+x_train, x_test = x_train / 255.0, x_test / 255.0
+
+# Define the CNN model
+model = models.Sequential([
+    # First Convolutional Block
+    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)),
+    layers.MaxPooling2D((2, 2)),
+    
+    # Second Convolutional Block
+    layers.Conv2D(64, (3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    
+    # Third Convolutional Block
+    layers.Conv2D(64, (3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    
+    # Flatten the output
+    layers.Flatten(),
+    
+    # Fully connected layers
+    layers.Dense(64, activation='relu'),
+    layers.Dense(10, activation='softmax')  # 10 classes for CIFAR-10
+])
+
+# Compile the model
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+# Train the model
+history = model.fit(x_train, y_train, epochs=10, 
+                    validation_data=(x_test, y_test))
+
+# Evaluate the model on test data
+test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
+print(f'Test accuracy: {test_acc:.4f}')
+
+# Predict on test data
+y_pred = np.argmax(model.predict(x_test), axis=1)
+
+# Calculate accuracy score
+acc_score = accuracy_score(y_test, y_pred)
+print(f'Accuracy Score: {acc_score:.4f}')
+
+# Confusion Matrix
+conf_matrix = confusion_matrix(y_test, y_pred)
+
+# Plotting Confusion Matrix
+plt.figure(figsize=(10, 8))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', 
+            xticklabels=['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck'],
+            yticklabels=['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck'])
+plt.xlabel('Predicted Label')
+plt.ylabel('True Label')
+plt.title('Confusion Matrix')
+plt.show()
+
+# Save the trained model weights
+model.save_weights('cnn_cifar10_weights.h5')
